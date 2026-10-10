@@ -24,6 +24,7 @@ import (
 
 	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/config/convert"
 	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/config/reset"
+	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/config/rotatecerts"
 	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/config/tidy"
 	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/config/view"
 )
@@ -33,7 +34,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:    cobra.NoArgs,
 		Use:     "config [command]",
-		Short:   "Manages config [convert, reset, tidy, view]",
+		Short: "Manages config [convert, reset, rotate-certs, tidy, view]",
 		GroupID: "cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
@@ -41,6 +42,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.AddCommand(reset.NewCommand(ctx))
+	cmd.AddCommand(rotatecerts.NewCommand(ctx))
 	cmd.AddCommand(tidy.NewCommand(ctx))
 	cmd.AddCommand(view.NewCommand(ctx))
 	cmd.AddCommand(convert.NewCommand(ctx))

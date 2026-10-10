@@ -241,48 +241,20 @@ func (c *Cluster) preInstall(_ context.Context, env *env) error {
 }
 
 func (c *Cluster) finishInstall(ctx context.Context, env *env) error {
-	conf := &env.kwokctlConfig.Options
-
 	for i := range env.kwokctlConfig.Components {
 		runtime.ApplyComponentPatches(ctx, &env.kwokctlConfig.Components[i], env.kwokctlConfig.ComponentsPatches)
 	}
 
 	// Setup kubeconfig
-	kubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
-		ProjectName:  c.Name(),
-		SecurePort:   conf.SecurePort,
-		Address:      env.scheme + "://" + utilsnet.LocalAddress + ":" + format.String(conf.KubeApiserverPort),
-		CACrtPath:    env.caCertPath,
-		AdminCrtPath: env.adminCertPath,
-		AdminKeyPath: env.adminKeyPath,
-	}))
+	err := c.writeHostKubeconfig(env)
 	if err != nil {
 		return err
 	}
-
-	inClusterKubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
-		ProjectName:  c.Name(),
-		SecurePort:   conf.SecurePort,
-		Address:      env.scheme + "://" + c.Name() + "-kube-apiserver:" + format.String(env.inClusterPort),
-		CACrtPath:    env.inClusterCaCertPath,
-		AdminCrtPath: env.inClusterAdminCertPath,
-		AdminKeyPath: env.inClusterAdminKeyPath,
-	}))
-	if err != nil {
+	if err := c.writeInClusterKubeconfig(env); err != nil {
 		return err
 	}
 
 	// Save config
-	err = c.WriteFile(env.kubeconfigPath, kubeconfigData)
-	if err != nil {
-		return err
-	}
-
-	err = c.WriteFile(env.inClusterOnHostKubeconfigPath, inClusterKubeconfigData)
-	if err != nil {
-		return err
-	}
-
 	err = c.SetConfig(ctx, env.kwokctlConfig)
 	if err != nil {
 		return err
@@ -309,6 +281,39 @@ func (c *Cluster) finishInstall(ctx context.Context, env *env) error {
 	}
 
 	return nil
+}
+
+// writeHostKubeconfig writes the kubeconfig exposed on the host.
+func (c *Cluster) writeHostKubeconfig(env *env) error {
+	conf := &env.kwokctlConfig.Options
+	kubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
+		ProjectName:  c.Name(),
+		SecurePort:   conf.SecurePort,
+		Address:      env.scheme + "://" + utilsnet.LocalAddress + ":" + format.String(conf.KubeApiserverPort),
+		CACrtPath:    env.caCertPath,
+		AdminCrtPath: env.adminCertPath,
+		AdminKeyPath: env.adminKeyPath,
+	}))
+	if err != nil {
+		return err
+	}
+	return c.WriteFile(env.kubeconfigPath, kubeconfigData)
+}
+
+// writeInClusterKubeconfig writes the kubeconfig mounted into components.
+func (c *Cluster) writeInClusterKubeconfig(env *env) error {
+	inClusterKubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
+		ProjectName:  c.Name(),
+		SecurePort:   env.kwokctlConfig.Options.SecurePort,
+		Address:      env.scheme + "://" + c.Name() + "-kube-apiserver:" + format.String(env.inClusterPort),
+		CACrtPath:    env.inClusterCaCertPath,
+		AdminCrtPath: env.inClusterAdminCertPath,
+		AdminKeyPath: env.inClusterAdminKeyPath,
+	}))
+	if err != nil {
+		return err
+	}
+	return c.WriteFile(env.inClusterOnHostKubeconfigPath, inClusterKubeconfigData)
 }
 
 // Uninstall uninstalls the cluster.

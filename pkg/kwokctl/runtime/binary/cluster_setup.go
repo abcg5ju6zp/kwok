@@ -219,42 +219,19 @@ func (c *Cluster) Install(ctx context.Context) error {
 }
 
 func (c *Cluster) finishInstall(ctx context.Context, env *env) error {
-	conf := &env.kwokctlConfig.Options
-
 	for i := range env.kwokctlConfig.Components {
 		runtime.ApplyComponentPatches(ctx, &env.kwokctlConfig.Components[i], env.kwokctlConfig.ComponentsPatches)
 	}
 
 	// Setup kubeconfig
-	inClusterKubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
-		ProjectName:  c.Name(),
-		SecurePort:   conf.SecurePort,
-		Address:      env.scheme + "://" + utilsnet.LocalAddress + ":" + format.String(conf.KubeApiserverPort),
-		CACrtPath:    env.caCertPath,
-		AdminCrtPath: env.adminCertPath,
-		AdminKeyPath: env.adminKeyPath,
-	}))
-	if err != nil {
-		return err
-	}
-	err = c.WriteFile(env.inClusterKubeconfigPath, inClusterKubeconfigData)
+	err := c.writeInClusterKubeconfig(env)
 	if err != nil {
 		return err
 	}
 
-	if conf.KubeApiserverInsecurePort != 0 {
-		kubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
-			ProjectName: c.Name(),
-			SecurePort:  false,
-			Address:     "http://" + utilsnet.LocalAddress + ":" + format.String(conf.KubeApiserverInsecurePort),
-		}))
-		if err != nil {
-			return err
-		}
-		err = c.WriteFile(env.kubeconfigPath, kubeconfigData)
-		if err != nil {
-			return err
-		}
+	err = c.writeHostKubeconfig(env)
+	if err != nil {
+		return err
 	}
 
 	// Save config
@@ -268,4 +245,41 @@ func (c *Cluster) finishInstall(ctx context.Context, env *env) error {
 	}
 
 	return nil
+}
+
+// writeInClusterKubeconfig writes the secure kubeconfig consumed by
+// components running in the cluster.
+func (c *Cluster) writeInClusterKubeconfig(env *env) error {
+	conf := &env.kwokctlConfig.Options
+	inClusterKubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
+		ProjectName:  c.Name(),
+		SecurePort:   conf.SecurePort,
+		Address:      env.scheme + "://" + utilsnet.LocalAddress + ":" + format.String(conf.KubeApiserverPort),
+		CACrtPath:    env.caCertPath,
+		AdminCrtPath: env.adminCertPath,
+		AdminKeyPath: env.adminKeyPath,
+	}))
+	if err != nil {
+		return err
+	}
+	return c.WriteFile(env.inClusterKubeconfigPath, inClusterKubeconfigData)
+}
+
+// writeHostKubeconfig writes the kubeconfig exposed on the host. When an
+// insecure port is configured it points at that port, otherwise the secure
+// kubeconfig is the same file as the in cluster one and is already in place.
+func (c *Cluster) writeHostKubeconfig(env *env) error {
+	conf := &env.kwokctlConfig.Options
+	if conf.KubeApiserverInsecurePort == 0 {
+		return nil
+	}
+	kubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
+		ProjectName: c.Name(),
+		SecurePort:  false,
+		Address:     "http://" + utilsnet.LocalAddress + ":" + format.String(conf.KubeApiserverInsecurePort),
+	}))
+	if err != nil {
+		return err
+	}
+	return c.WriteFile(env.kubeconfigPath, kubeconfigData)
 }

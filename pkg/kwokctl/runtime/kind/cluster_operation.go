@@ -17,7 +17,6 @@ limitations under the License.
 package kind
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -115,20 +114,7 @@ func (c *Cluster) Up(ctx context.Context) error {
 	}
 
 	// TODO: remove this when kind support set server
-	err = c.fillKubeconfigContextServer(conf.BindAddress)
-	if err != nil {
-		return err
-	}
-
-	kubeconfigPath := c.GetWorkdirPath(runtime.InHostKubeconfigName)
-
-	kubeconfigBuf := bytes.NewBuffer(nil)
-	err = c.Kubectl(utilsexec.WithWriteTo(ctx, kubeconfigBuf), "config", "view", "--minify=true", "--raw=true")
-	if err != nil {
-		return err
-	}
-
-	err = c.WriteFile(kubeconfigPath, kubeconfigBuf.Bytes())
+	err = c.writeHostKubeconfig(ctx, conf)
 	if err != nil {
 		return err
 	}

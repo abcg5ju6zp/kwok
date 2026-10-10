@@ -129,6 +129,12 @@ type Runtime interface {
 	// SnapshotRestoreWithYAML restore the snapshot of cluster
 	SnapshotRestoreWithYAML(ctx context.Context, path string, conf SnapshotRestoreWithYAMLConfig) error
 
+	// RotateCertificates rotates the CA and all certificates of the running
+	// cluster without recreating it. The operation is generation based,
+	// resumable and rolled back to the previous generation when a component
+	// switch fails. Clusters that do not serve TLS are left untouched.
+	RotateCertificates(ctx context.Context) error
+
 	// GetWorkdirPath get the workdir path of cluster
 	GetWorkdirPath(name string) string
 
