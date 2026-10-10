@@ -18,6 +18,7 @@ kwokctl snapshot export [flags]
       --page-size int            Define the page size (default 500)
       --path string              Path to the snapshot
       --record                   Record the change of the cluster
+      --resume                   Resume recording into an existing recording file; the filter scope must match the original recording
 ```
 
 ### Options inherited from parent commands

@@ -52,6 +52,12 @@ func ReplaceTimeToRelative(baseTime time.Time, data []byte) []byte {
 
 // RevertTimeFromRelative reverts the time from relative to absolute.
 func RevertTimeFromRelative(baseTime time.Time, data []byte) []byte {
+	return RevertTimeFromRelativeWithFormat(baseTime, formatRFC3339Micro, data)
+}
+
+// RevertTimeFromRelativeWithFormat reverts the time from relative to absolute
+// using the given time format.
+func RevertTimeFromRelativeWithFormat(baseTime time.Time, format string, data []byte) []byte {
 	return regRevertTimeOffset.ReplaceAllFunc(data, func(s []byte) []byte {
 		// $(time-offset-nanosecond 0)
 		i, err := strconv.ParseInt(string(s[25:len(s)-1]), 0, 0)
@@ -60,7 +66,7 @@ func RevertTimeFromRelative(baseTime time.Time, data []byte) []byte {
 		}
 
 		t := baseTime.Add(time.Duration(i)).UTC()
-		return []byte(t.Format(formatRFC3339Micro))
+		return []byte(t.Format(format))
 	})
 }
 

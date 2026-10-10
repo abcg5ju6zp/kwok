@@ -122,6 +122,12 @@ func (l *Loader) Load(ctx context.Context, decoder *yaml.Decoder) error {
 			break
 		}
 
+		// Recording metadata and progress boundaries are transparent to
+		// replay and are not cluster resources.
+		if recording.IsRecordingDocument(obj) {
+			continue
+		}
+
 		if !l.filterGK(obj.GroupVersionKind().GroupKind()) {
 			logger.Warn("Skipped",
 				"resource", "filtered",
