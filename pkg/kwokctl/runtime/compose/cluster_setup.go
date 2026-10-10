@@ -127,87 +127,7 @@ func (c *Cluster) Install(ctx context.Context) error {
 		return err
 	}
 
-	err = c.addEtcd(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeApiserver(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubectlProxy(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeControllerManager(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeScheduler(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKwokController(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addMetricsServer(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addPrometheus(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addJaeger(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addSchedulerPlugins(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKueue(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKueueviz(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addJobSet(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addLWS(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addDescheduler(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addNodeReadinessController(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.setupPrometheusConfig(ctx, env)
+	err = c.setupComponents(ctx, env)
 	if err != nil {
 		return err
 	}
@@ -242,10 +162,6 @@ func (c *Cluster) preInstall(_ context.Context, env *env) error {
 
 func (c *Cluster) finishInstall(ctx context.Context, env *env) error {
 	conf := &env.kwokctlConfig.Options
-
-	for i := range env.kwokctlConfig.Components {
-		runtime.ApplyComponentPatches(ctx, &env.kwokctlConfig.Components[i], env.kwokctlConfig.ComponentsPatches)
-	}
 
 	// Setup kubeconfig
 	kubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{

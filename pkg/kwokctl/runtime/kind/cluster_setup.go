@@ -60,57 +60,7 @@ func (c *Cluster) Install(ctx context.Context) error {
 		return err
 	}
 
-	err = c.addKind(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addEtcd(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeApiserver(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubectlProxy(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeControllerManager(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeScheduler(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKwokController(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addMetricsServer(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addPrometheus(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addJaeger(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.setupPrometheusConfig(ctx, env)
+	err = c.setupComponents(ctx, env)
 	if err != nil {
 		return err
 	}
@@ -121,6 +71,54 @@ func (c *Cluster) Install(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// setupComponents renders and ensures every enabled component, including the
+// kind node configuration (kind.yaml) and the static pod manifests staged in
+// the manifests directory. It is shared by cluster installation and component
+// updates and never starts or stops running components.
+func (c *Cluster) setupComponents(ctx context.Context, env *env) error {
+	if err := c.addKind(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addEtcd(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addKubeApiserver(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addKubectlProxy(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addKubeControllerManager(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addKubeScheduler(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addKwokController(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addMetricsServer(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addPrometheus(ctx, env); err != nil {
+		return err
+	}
+
+	if err := c.addJaeger(ctx, env); err != nil {
+		return err
+	}
+
+	return c.setupPrometheusConfig(ctx, env)
 }
 
 func (c *Cluster) preInstall(_ context.Context, env *env) error {

@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/snapshot"
 	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/start"
 	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/stop"
+	"sigs.k8s.io/kwok/pkg/kwokctl/cmd/update"
 	"sigs.k8s.io/kwok/pkg/kwokctl/dryrun"
 	"sigs.k8s.io/kwok/pkg/kwokctl/runtime"
 	"sigs.k8s.io/kwok/pkg/utils/version"
@@ -72,6 +73,7 @@ func NewCommand(ctx context.Context) *cobra.Command {
 		port_forward.NewCommand(ctx),
 		export.NewCommand(ctx),
 		conf.NewCommand(ctx),
+		update.NewCommand(ctx),
 	)
 	cmd.AddGroup(
 		&cobra.Group{ID: "cluster", Title: "Cluster Commands:"},

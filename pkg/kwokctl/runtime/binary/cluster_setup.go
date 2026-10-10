@@ -155,52 +155,7 @@ func (c *Cluster) Install(ctx context.Context) error {
 		}
 	}
 
-	err = c.addEtcd(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeApiserver(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubectlProxy(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeControllerManager(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKubeScheduler(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addKwokController(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addMetricsServer(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addPrometheus(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.addJaeger(ctx, env)
-	if err != nil {
-		return err
-	}
-
-	err = c.setupPrometheusConfig(ctx, env)
+	err = c.setupComponents(ctx, env)
 	if err != nil {
 		return err
 	}
@@ -220,10 +175,6 @@ func (c *Cluster) Install(ctx context.Context) error {
 
 func (c *Cluster) finishInstall(ctx context.Context, env *env) error {
 	conf := &env.kwokctlConfig.Options
-
-	for i := range env.kwokctlConfig.Components {
-		runtime.ApplyComponentPatches(ctx, &env.kwokctlConfig.Components[i], env.kwokctlConfig.ComponentsPatches)
-	}
 
 	// Setup kubeconfig
 	inClusterKubeconfigData, err := kubeconfig.EncodeKubeconfig(kubeconfig.BuildKubeconfig(kubeconfig.BuildKubeconfigConfig{
